@@ -15,13 +15,18 @@ Als startopdracht modelleren we twee fietsers. Doorloop de bovenstaande drie sta
 
 
 ```python
-m = 80
-v = 2
+import numpy as np
+
+t = np.linspace(1,10,1)
+x1_0 = 2
+x2_0 = 0
+
+v1 = 5
+v2 = 8
 
 
-F = m*a
-v = s/t
-a = v/t
+x1 = x1_0+v1*t
+x2 = x1_0+v2*t
 
 ```
 
@@ -92,6 +97,44 @@ Maak het tijdsinterval $dt$ groter en vergelijk de afgelegde weg in de tien seco
 
 ```python
 %reset -f  #clears memory as we don't need it further down 
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Beginwaarden
+dt = 0.5                #s
+t_e = 10                   #s
+N = int(t_e/dt)+1
+t = np.arange(0,t_e+dt,dt) #s
+
+# fietser 1
+x_1 = np.zeros(N)          #m     maakt array van lengte N met alleen maar waarde 0.
+v_1 = 5                    #m/s
+
+# fietser 2
+x_2 = np.zeros(N)          #m     
+v_2 = np.zeros(N)          #m/s     
+a_2 = .5                   #m/s^2     
+
+# Uitvoeren van de simulatie
+for i in range(0,N-1):
+    x_1[i+1] = x_1[i] + v_1*dt
+    
+    x_2[i+1] = x_2[i] + v_2[i]*dt
+    v_2[i+1] = v_2[i] + a_2*dt
+
+# Plotten van de gegevens.    
+plt.figure()
+
+plt.xlabel('$t$(s)')
+plt.ylabel('$x$(m)')
+
+plt.plot(t,x_1,'r.', markersize=1, label='fietser 1')
+plt.plot(t,x_2,'b.', markersize=1, label='fietser 2')
+
+plt.show()
+
+#de afgelegde weg blijft hetzelfde, dit is logisch omdat de snelheid en de totale tijd hetzelfde blijft
+#het is wel onnouwkeuriger omdat er minder informatie is over wat er in die tijd gebeurd
 ```
 
 ## Naar een deeltjesmodel
@@ -191,6 +234,7 @@ Voorspel en controleer vervolgens met onderstaande code.
 ```
 
 ```python
+#de y positie zal gelijk blijven en de x-positie met 5 meter per seconde toenemen
 import numpy as np
 import matplotlib.pyplot as plt
 
