@@ -206,10 +206,14 @@ that_particle = ParticleClass(m=1.0, v=[2.0, 0], r=[5.0, 0.0],R=1.0)
 print("Huidige positie van this_particle " + str(this_particle.r))
 print("Huidige position van that_particle " + str(that_particle.r))
 
+
+
 # oproepen van de functie 'update_position' met dt = 2.0 seconde
 that_particle.update_position(2.0)
 print("Nieuwe positie van this_particle " + str(this_particle.r))
 print("Nieuwe positie van that_particle " + str(that_particle.r))
+
+
 ```
 
 We kunnen ook een array van objecten maken.
@@ -252,6 +256,7 @@ Door gebruik te maken van een array waarin alle deeltjes zijn opgeslagen, kun je
 Hierbij kan je mooi gebruik maken van hoe Python loops maakt: als je één voor één de verschillende elementen van array af wilt gaan en daar dezelfde bewerking op doen, gaat dat zo:
 
 ```python
+
 for particle, particle_object in enumerate(particle_array):
     print("Deeltje " + str(particle) + ", huidige positie: " + str(particle_object.r))
     print("oproepen van de functie 'update_position' met dt = 1.0 second ")
@@ -284,6 +289,27 @@ En als je wilt gaan voor een uitdaging:
 
 ```python
 ### YOUR CODE HERE ###
+start_positions = []
+particle_array = []
+for start_x in range(10):
+    particle_array.append(ParticleClass(m=1.0, v=[np.random.randint(-5,6), 0], r=[start_x, 0.0],R=1.0))
+    start_positions.append([start_x, 0.0])
+
+
+
+
+for particle in particle_array:
+    particle.update_position(1.0)
+
+plt.figure()
+for particle in particle_array:
+    plt.plot(particle.r[0],particle.r[1],".")
+for position in start_positions:
+    plt.plot(position[0], position[1], "bo")
+plt.show()
+
+
+
 ```
 
 Onze simulaties worden snel “zwaar”. Er moeten veel berekeningen gedaan worden en dat kost nu eenmaal tijd. Nu is het wel zo dat sommige berekeningen meer tijd kosten dan anderen. Om te kijken of een stukje code geoptimaliseerd kan worden, moeten we een timer maken. Dat kan met onderstaande code:
@@ -304,6 +330,17 @@ eind = time.time()
 lengte = eind - start
 
 print("Dit kostte ", lengte, "seconde!")
+
+start_2 = time.time()
+
+array_2 = np.random.rand(N)
+
+eind_2 = time.time()
+lengte_2 = eind_2-start_2
+
+print(lengte_2)
+
+print("De tweede methode is", lengte/lengte_2,"keer korter")
 ```
 
 Idealiter draaien we de bovenstaande code een aantal keer zodat we een goede schatting hebben van de rekentijd.
@@ -326,7 +363,7 @@ De runtime is {eval}`<naam variabele>` korter.
 ```
 
 ```python
-
+print("De runtime is", lengte/lengte_2,"korter")
 ```
 
 ## Aan de slag met deeltjes
@@ -457,12 +494,14 @@ def init():
     dot.set_data([], [])
     return dot,
 
-# Update function for each frame
+# harde wanden
 def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
+### YOUR CODE HERE ###
+    if 10 <= np.abs(particle.r[0]):
+        particle.v[0] = -particle.v[0]
     return dot,
-
 # Create animation
 ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
 
@@ -486,8 +525,13 @@ Controleer je eigen antwoord door de functie hierboven even te vervangen door de
 def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
-### YOUR CODE HERE ###
-    return dot,         
+### YOUR CODE HERE ###        
+    if particle.r[0] > 10:
+        particle.r[0] = -10
+    if particle.r[0] < -10:
+        particle.r[0] = 10
+    return dot,
+
 ```
 
 ```{exercise} Harde wanden
@@ -503,6 +547,8 @@ def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
 ### YOUR CODE HERE ###
+    if 10 <= np.abs(particle.r[0])
+        particle.v[0] = -particle.v[0]
     return dot,
 ```
 
@@ -518,6 +564,7 @@ dt = 0.1         # time step
 num_steps = 500  # number of time steps
 
 ### YOUR CODE HERE ###
+particle = ParticleClass(m=1.0, v=[5.0, 3.0], r=[0.0, 0.0],R=1.0)  
 
 # Create the figure and axis
 fig, ax = plt.subplots()
@@ -541,6 +588,10 @@ def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
     ### YOUR CODE HERE ###
+    if 10 <= np.abs(particle.r[0]):
+        particle.v[0] = -particle.v[0]
+    if 10 <= np.abs(particle.r[1]):
+        particle.v[1] = -particle.v[1]
     return dot,
 
 # Create animation
@@ -586,8 +637,22 @@ class ParticleClass:
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
+a = -9.81
 particle = ParticleClass(m=1.0, v=[5.0, 0], r=[0.0, 0.0],R=1.0)  
 ### YOUR CODE HERE ###
+# Maken van de class met versnelling
+class ParticleClass:
+    def __init__(self, m, v, r, R):
+        self.m = m                         # mass of the particle
+        self.v = np.array(v, dtype=float)  # velocity vector
+        self.r = np.array(r, dtype=float)  # position vector
+        self.R = R # radius of the particle
+        self.a = np.array([0,a], dtype=float)
+    def update_position(self):
+        self.r += self.v * dt
+    
+    def update_velocity(self, a):
+        self.v += a*dt
 # Create the figure and axis
 fig, ax = plt.subplots()
 ax.set_xlim(-10, 10)
@@ -612,6 +677,10 @@ def update(frame):
     
     dot.set_data([particle.r[0]], [particle.r[1]])
     ### YOUR CODE HERE ###
+    if 10 <= np.abs(particle.r[0]):
+        particle.v[0] = -particle.v[0]
+    if 10 <= np.abs(particle.r[1]):
+        particle.v[1] = -particle.v[1]
     return dot,
 
 # Create animation
@@ -632,7 +701,7 @@ Herinner wat we in Q1 hebben gedaan bij de basics van een numerieke simulatie...
 
 ```{solution} ex-deeltjesmodel-6
 Jouw antwoord hier...
-```
+Er lijkt geen behoud van energie omdat de potentïele energie daalt doordat de zwaarte-energie daalt maar de kinetische energie niet lijkt te stijgen omdat de snelheid niet stijgt. Hierdoor daalt de totale energie terwijl deze behouden zou moeten worden. 
 
 Een optie om de simulatie te verbeteren is de tijdstap $\Delta t$ kleiner te maken, maar dan hebben we ook meer geduld meer nodig - het aantal berekeningen schaalt met $\frac{1}{\Delta t}$. Een tweede optie is een meer directe oplossing: We weten dat $a = \mathrm{const.}$ en daarom weten we ook de bewegingsvergelijking van het deeltje!
 
