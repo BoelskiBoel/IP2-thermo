@@ -49,6 +49,15 @@ Als model gaan we uit van een deel van het volume van een fietsband die onder ee
 
 ```{solution} ex-recap-1
 ### YOUR CODE HERE ###
+p*V = NkbT
+
+V = (kbT)/p
+
+  = (1.38*10**-23*293)/1*10**-6 
+  
+  = 4.04 * 10 **-27
+  
+lrib = 3sqrt(V) is ongeveer 1.6 mm
 ```
 
 De simulatie die we gaan maken bevat maar twee dimensies. We kunnen het oppervlak per deeltje in deze simulatie daarom kiezen als het zojuist berekende $V_\text{molecuul}^{2/3}$.
@@ -69,6 +78,11 @@ Ook deze heb je hierna nodig.
 
 ```{solution} ex-recap-2
 ### YOUR CODE HERE ###
+v = sqrt((2kb*T)/m)
+
+voor een stikstof molecuul: m = 4.64*10**-26
+
+geeft: v is ongeveer 4 * 10 **2
 ```
 
 ```{exercise} Radius
@@ -82,17 +96,18 @@ In de python cell hieronder staan enkele waarden gegeven. Het aantal deeltjes $N
 
 ```{exercise} DT
 :label: ex-recap-4
-Bekijk de waarde van `DT`. Hoe zorgt deze waaarde ervoor dat het onwaarschijnlijk is dat een botsing gemist wordt? Zet in het groene commentaar bij elke constante in welk eenheid deze wordt weergegeven.
+Bekijk de waarde van `DT`. Hoe zorgt deze waarde ervoor dat het onwaarschijnlijk is dat een botsing gemist wordt? Zet in het groene commentaar bij elke constante in welk eenheid deze wordt weergegeven.
 ```
+De waarde is klein waardoor het deeltje in die tijd maar 0.004 meter aflegt en een botsing waarschijnlijk niet gemist wordt.
 
 Onze simulatie modelleert dus een klein systeem zonder rekening te houden met de kracht tussen de luchtmoleculen. Je zult zien dat we toch al behoorlijk wat van de processor vragen om deze berekeningen te doen. Om een meer realistische modelsimulatie te maken is daarom een serieuze uitdaging, die veel wiskunde en programmeerervaring vraagt. Op dit ogenblik wordt dit bijvoorbeeld gevraagd bij een van de eerste opdrachten van het vak 'Computational Physics' van de master Applied Physics. 
 
 ```python tags=["NB2_init"] editable=true slideshow={"slide_type": ""}
-BOX_SIZE_0 = 10                # Hoogte en lengte startvolume
-N = 40                         # Aantal deeltjes
-V_0 = 1                        # Startsnelheid van deeltjes
-RADIUS = 0.3                   # Straal van moleculen
-DT = 0.1 * RADIUS / V_0        # Tijdstap om geen botsing te missen
+BOX_SIZE_0 = 10                # Hoogte en lengte startvolume, m
+N = 40                         # Aantal deeltjes, geen eenheid
+V_0 = 1                        # Startsnelheid van deeltjes, m/s
+RADIUS = 0.3                   # Straal van moleculen, nm
+DT = 0.1 * RADIUS / V_0        # Tijdstap om geen botsing te missen, s
 ```
 
 ### Particle class
@@ -184,6 +199,9 @@ Leg uit dat d.m.v. onderstaande code de deeltjes allemaal dezelfde snelheid hebb
 
 ```{solution} ex-recap-5
 Jouw antwoord hier...
+De deeltjes krijgen een x snelheid tussen de -1 en 1 m/s. Daarde wordt vy gelijk gesteld aan +/- sqrt(vx**2 + v0**2)
+
+v = sqrt(vx^2 + vy^2) als hierin vy wordt ingevyld valt vx weg en blijft alleen v0 over. v is dus altijd gelijk aan v0
 ### YOUR CODE HERE ###
 ```
 
@@ -209,7 +227,7 @@ Leg uit hoe er in onderstaande code wordt voorkomen dat de botsing tussen twee d
 ```
 
 ```{solution} ex-recap-6
-Jouw antwoord hier...
+door de range van j bij i + 1 te laten starten. 
 ### YOUR CODE HERE ###
 ```
 
@@ -253,6 +271,8 @@ def take_time_step(particles):
 Zoals aangegeven, kunnen we een animatie maken van de positie en snelheid als functie van de tijd, maar we kunnen ook het eindresultaat tonen en interpreteren:
 
 ```python
+import numpy as np
+import matplotlib.pyplot as plt
 particles = []
 create_particles(particles)
 for i in range(100):
