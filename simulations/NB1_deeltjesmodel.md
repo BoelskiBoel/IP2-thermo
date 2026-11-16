@@ -547,7 +547,7 @@ def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
 ### YOUR CODE HERE ###
-    if 10 <= np.abs(particle.r[0])
+    if 10 <= np.abs(particle.r[0]):
         particle.v[0] = -particle.v[0]
     return dot,
 ```
@@ -637,8 +637,7 @@ class ParticleClass:
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
-a = -9.81
-particle = ParticleClass(m=1.0, v=[5.0, 0], r=[0.0, 0.0],R=1.0)  
+a = -9.81  
 ### YOUR CODE HERE ###
 # Maken van de class met versnelling
 class ParticleClass:
@@ -652,7 +651,8 @@ class ParticleClass:
         self.r += self.v * dt
     
     def update_velocity(self, a):
-        self.v += a*dt
+        self.v[1] += a*dt
+particle = ParticleClass(m=1.0, v=[5.0, 0], r=[0.0, 0.0],R=1.0)
 # Create the figure and axis
 fig, ax = plt.subplots()
 ax.set_xlim(-10, 10)
@@ -692,6 +692,7 @@ HTML(ani.to_jshtml())
 
 ```
 
+````python
 ```{exercise}
 :label: ex-deeltjesmodel-6
 
@@ -781,16 +782,35 @@ We hebben steeds slechts gewerkt met een enkel deeltje. Maar om de simulatie uit
 
 Maak de code hieronder voor twee deeltjes die bewegen in een afgesloten doos. Beide deeltjes ondervinden een zwaartekracht. Beide deeltjes starten op hetzelfde punt, zonder beginsnelheid in de verticale richting. Echter, een van de twee deeltjes heeft een initiële horizontale snelheid.
 ```
+````
 
 ```python
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
-particleA = ParticleClass(m=1.0, v=[0, 0], r=[0.0, 0.0],R=1.0)  
-### YOUR CODE HERE ###
 
-track_x = []
-track_y = []
+### YOUR CODE HERE ###
+a = -9.81
+
+class ParticleClass:
+    def __init__(self, m, v, r, R, a):
+        self.m = m                         # mass of the particle
+        self.v = np.array(v, dtype=float)  # velocity vector
+        self.r = np.array(r, dtype=float)  # position vector
+        self.R = R # radius of the particle
+        self.a = np.array([0,-9.81], dtype=float)
+    def update_position(self):
+        self.r += self.v * dt
+    
+    def update_velocity(self, a):
+        self.v += self.a*dt
+        
+particleA = ParticleClass(m=1.0, v=[0, 0], r=[0.0, 0.0],R=1.0,a=[0,-9.81])
+particleB = ParticleClass(m=1.0,v=[1,0], r=[0.0,0.0],R=1.0,a=[0,-9.81])
+track_x_A = []
+track_y_A = []
+track_x_B = []
+track_y_B = []
 
 # Create the figure and axis
 fig, ax = plt.subplots()
@@ -800,7 +820,8 @@ ax.set_aspect('equal')
 ax.set_title("Particle Animation")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
-track_line, = ax.plot([], [], 'r--', linewidth=1)  
+track_line_A, = ax.plot([], [], 'r--', linewidth=1)  
+track_line_B, = ax.plot([], [], 'b--', linewidth=1)
 
 # Create the particle as a red dot
 dotA, = ax.plot([], [], 'ro', markersize=10)
@@ -808,19 +829,29 @@ dotB, = ax.plot([], [], 'bo', markersize=10)
 
 # Initialization function for animation
 def init():
-    dot.set_data([], [])
-    return dot,
+    dotA.set_data([], [])
+    dotB.set_data([], [])
+    return dotA, dotB, track_line_A, track_line_B
+   
 
 # Update function for each frame
 def update(frame):
-    particleA.update_position()
     particleA.update_velocity(a)
-
+    particleA.update_position()
+    
+    
 ### YOUR CODE HERE ###
+    particleB.update_velocity(a)
+    particleB.update_position()
+    
+    
+    track_x_A.append(particleA.r[0])
+    track_y_A.append(particleA.r[1])
+    track_line_A.set_data(track_x_A, track_y_A)
 
-    track_x.append(particleA.r[0])
-    track_y.append(particleA.r[1])
-    track_line.set_data(track_x, track_y)
+    track_x_B.append(particleB.r[0])
+    track_y_B.append(particleB.r[1])
+    track_line_B.set_data(track_x_B, track_y_B)
     
     dotA.set_data([particleA.r[0]], [particleA.r[1]])
     dotB.set_data([particleB.r[0]], [particleB.r[1]])
@@ -836,7 +867,7 @@ def update(frame):
     if particleB.r[1]**2>100: 
         particleB.v[1] = -particleB.v[1]
 
-    return dot, track_line
+    return dotA, dotB, track_line_A, track_line_B
 
 # Create animation
 ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
@@ -863,7 +894,8 @@ Nu je een beetje weet hoe een numeriek model werkt, hoe je boundaries kunt opgev
 
 ```{solution} ex-deeltjes_10
 Jouw antwoord.
-```
+1. r1 = r2
+2. 
 
 ```python tags=["NB1_botsingsvoorwaarde"]
 # Define a class for a particle
@@ -881,79 +913,90 @@ class ParticleClass:
 
     def collide_detection(self, other):
         ### YOUR CODE HERE ###
+        dx = self.r[0]-other.r[0]
+        dy = self.r[1]-other.r[1]
+        rr = self.R + other.R
         return  dx**2+dy**2 < rr**2 
 ```
 
 ```python
-# Simulation parameters
-dt = 0.1         # time step
-num_steps = 200  # number of time steps
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
 
-particleA = ParticleClass(m=1.0, v=[2.5, 0], r=[-2.0, 0.0],R=0.45)  
-particleB = ParticleClass(m=1.0, v=[-1, 0], r=[0.0, 0.0],R=0.45)  
+dt = 0.1
+num_steps = 200
+
+class ParticleClass:
+    def __init__(self, m, v, r, R):
+        self.m = m
+        self.v = np.array(v, dtype=float)
+        self.r = np.array(r, dtype=float)
+        self.R = R
+
+    def update_position(self):
+        self.r += self.v * dt
+
+    def collide_detection(self, other):
+        dx = self.r[0] - other.r[0]
+        dy = self.r[1] - other.r[1]
+        rr = self.R + other.R
+        return dx**2 + dy**2 < rr**2
+
+particleA = ParticleClass(m=1.0, v=[2.5, 0], r=[-2.0, 0.0], R=0.45)
+particleB = ParticleClass(m=1.0, v=[-1, 0], r=[0.0, 0.0], R=0.45)
 
 track_x = []
 track_y = []
 
-
-# Creer de plot
-
 fig, ax = plt.subplots()
-
 ax.set_xlim(-10, 10)
 ax.set_ylim(-10, 10)
 ax.set_aspect('equal')
 ax.set_title("Particle Animation")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
-track_line, = ax.plot([], [], 'r--', linewidth=1)  
 
-# Toon het deeltje als een rode stip
-dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
+track_line, = ax.plot([], [], 'r--', linewidth=1)
 dotA, = ax.plot([], [], 'ro', markersize=10)
 dotB, = ax.plot([], [], 'bo', markersize=10)
 
-# Initaliseren voor de animatie
 def init():
-    dot.set_data([], [])
-    return dot,
+    dotA.set_data([], [])
+    dotB.set_data([], [])
+    track_line.set_data([], [])
+    return dotA, dotB, track_line
 
-# Updaten van de functie per frame
 def update(frame):
     particleA.update_position()
     particleB.update_position()
 
+    # botsing tussen de deeltjes 
+    if particleA.collide_detection(particleB):
+        particleA.v, particleB.v = particleB.v.copy(), particleA.v.copy()
+
+    # botsing met de wand
+    if particleA.r[0]**2 > 100:
+        particleA.v[0] = -particleA.v[0]
+    if particleA.r[1]**2 > 100:
+        particleA.v[1] = -particleA.v[1]
+    if particleB.r[0]**2 > 100:
+        particleB.v[0] = -particleB.v[0]
+    if particleB.r[1]**2 > 100:
+        particleB.v[1] = -particleB.v[1]
+
     track_x.append(particleA.r[0])
     track_y.append(particleA.r[1])
     track_line.set_data(track_x, track_y)
-    
     dotA.set_data([particleA.r[0]], [particleA.r[1]])
     dotB.set_data([particleB.r[0]], [particleB.r[1]])
 
-    # botsing tussen de deeltjes onderling
-    if particleA.collide_detection(particleB):
-        ### YOUR CODE HERE ###
+    return dotA, dotB, track_line
 
-
-    # botsing met de wand
-    if particleA.r[0]**2>100: 
-        particleA.v[0] = -particleA.v[0]
-    if particleA.r[1]**2>100: 
-        particleA.v[1] = -particleA.v[1]
-
-    dot.set_data([particleB.r[0]], [particleB.r[1]])
-    if particleB.r[0]**2>100: 
-        particleB.v[0] = -particleB.v[0]
-    if particleB.r[1]**2>100: 
-        particleB.v[1] = -particleB.v[1]
-
-    return dot, track_line
-
-# Creeer animatie
 ani = FuncAnimation(fig, update, frames=range(num_steps), init_func=init, blit=True, interval=50)
 
-# Voor Jupyter notebook:
-from IPython.display import HTML
+plt.close(fig)
 HTML(ani.to_jshtml())
 ```
 
@@ -1011,8 +1054,7 @@ Wat is de beperkende factor in ons script om het aantal botsingen als functie va
 ```
 
 ```{solution} ex-deeltjes-12
-Jouw antwoord
-```
+dt is op 0.1 gezet dus er wordt maar elke 0.1 seconden gecheckt hoeveel botsingen er zijn. Bij grotere massaverhoudingen zullen er meerdere botsingen plaatsvinden in 0.1 seconden die dus niet worden geregistreerd.  
 
 
 ```python
@@ -1037,7 +1079,7 @@ class ParticleClass:
 dt = 0.1         # time step
 num_steps = 530  # number of time steps
 m1 = 1.0
-m2 = 1.0
+m2 = 50
 
 particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0],R=0.45)  
 particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0],R=0.45)  
@@ -1056,6 +1098,7 @@ ax.set_ylabel("y")
 dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
 
 counter = 0
+
 
 # Create the particle as a red dot
 dotA, = ax.plot([], [], 'ro', markersize=10)
@@ -1087,15 +1130,18 @@ def update(frame):
         particleA.v = vA_new
         particleB.v = vB_new
         ### YOUR CODE HERE ###
+        counter +=1
 
 
     # wall collision detection and response
     if particleA.r[0]**2>100: # Check if particle is outside the bounds, np.abs could be used but is slower
         particleA.v[0] = -particleA.v[0]
         ### YOUR CODE HERE ###
+        counter +=1
     if particleA.r[1]**2>100: 
         particleA.v[1] = -particleA.v[1]
         ### YOUR CODE HERE ###
+        counter +=1
 
     dot.set_data([particleB.r[0]], [particleB.r[1]])
     if particleB.r[0]**2>100: 
@@ -1122,6 +1168,133 @@ Pas de bovenstaande code aan zodat $m_1 = 1$ en $m_2 = 50$. Run de code en geef 
 ```python tags=["NB1_eindantwoord"]
 #num_botsingen = ...
 ### YOUR CODE HERE ###
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+class ParticleClass:
+    def __init__(self, m, v, r, R):
+        self.m = m                  # mass of the particle
+        self.v = np.array(v, dtype=float)  # velocity vector
+        self.r = np.array(r, dtype=float)  # position vector
+        self.R = R                         # radius of the particle
+
+    def update_position(self):
+        self.r += self.v * dt 
+
+    def collide_detection(self, other):
+        return np.linalg.norm(self.r - other.r) <= (self.R + other.R)
+
+# Simulation parameters
+dt = 0.05         # time step
+num_steps = 530  # number of time steps
+m1 = 1.0
+m2 = 50
+
+particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0],R=0.45)  
+particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0],R=0.45)  
+
+
+# Create the figure and axis
+
+fig, ax = plt.subplots()
+
+ax.set_xlim(-10, 10)
+ax.set_ylim(-10, 10)
+ax.set_aspect('equal')
+ax.set_title("Particle Animation")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
+
+counter = 0
+
+
+# Create the particle as a red dot
+dotA, = ax.plot([], [], 'ro', markersize=10)
+dotB, = ax.plot([], [], 'bo', markersize=10)
+
+counter_text = ax.text(-9.5, 9, "")
+
+# Initialization function for animation
+def init():
+    dot.set_data([], [])
+    return dot,
+
+# Update function for each frame
+def update(frame):
+    global counter
+    particleA.update_position()
+    particleB.update_position()
+
+    dotA.set_data([particleA.r[0]], [particleA.r[1]])
+    dotB.set_data([particleB.r[0]], [particleB.r[1]])
+
+    counter_text.set_text(f"Collisions: {counter}")
+
+    #collision detection and response
+    if particleA.collide_detection(particleB):
+        vA, vB, mA, mB, rA, rB = particleA.v, particleB.v, particleA.m, particleB.m, particleA.r, particleB.r
+        if np.dot(particleA.v - particleB.v,particleA.r-particleB.r) < 0:
+         counter +=1
+               
+        vA_new = vA - 2 * mB / (mA + mB) * np.dot(vA - vB, rA - rB) / (1e-12+np.linalg.norm(rA - rB))**2 * (rA - rB)
+        vB_new = vB - 2 * mA / (mA + mB) * np.dot(vB - vA, rB - rA) / (1e-12+np.linalg.norm(rB - rA))**2 * (rB - rA)
+        particleA.v = vA_new
+        particleB.v = vB_new
+        ### YOUR CODE HERE ###
+
+
+
+# Wall collision detection and response
+
+# Particle A - x direction
+if particleA.r[0] + particleA.R > 10:
+    particleA.r[0] = 10 - particleA.R
+    particleA.v[0] = -particleA.v[0]
+    counter += 1
+
+elif particleA.r[0] - particleA.R < -10:
+    particleA.r[0] = -10 + particleA.R
+    particleA.v[0] = -particleA.v[0]
+    counter += 1
+
+# Particle A - y direction
+if particleA.r[1] + particleA.R > 10:
+    particleA.r[1] = 10 - particleA.R
+    particleA.v[1] = -particleA.v[1]
+    counter += 1
+
+elif particleA.r[1] - particleA.R < -10:
+    particleA.r[1] = -10 + particleA.R
+    particleA.v[1] = -particleA.v[1]
+    counter += 1
+
+
+# Particle B - x direction
+if particleB.r[0] + particleB.R > 10:
+    particleB.r[0] = 10 - particleB.R
+    particleB.v[0] = -particleB.v[0]
+
+elif particleB.r[0] - particleB.R < -10:
+    particleB.r[0] = -10 + particleB.R
+    particleB.v[0] = -particleB.v[0]
+
+# Particle B - y direction
+if particleB.r[1] + particleB.R > 10:
+    particleB.r[1] = 10 - particleB.R
+    particleB.v[1] = -particleB.v[1]
+
+elif particleB.r[1] - particleB.R < -10:
+    particleB.r[1] = -10 + particleB.R
+    particleB.v[1] = -particleB.v[1]
+return dotA, dotB, counter_text
+# Create animation
+ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
+
+# For Jupyter notebook:
+from IPython.display import HTML
+HTML(ani.to_jshtml())
 ```
 
 ```{exercise}
