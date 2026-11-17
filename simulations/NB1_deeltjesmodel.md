@@ -1166,37 +1166,36 @@ Pas de bovenstaande code aan zodat $m_1 = 1$ en $m_2 = 50$. Run de code en geef 
 
 
 ```python tags=["NB1_eindantwoord"]
-#num_botsingen = ...
-### YOUR CODE HERE ###
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 class ParticleClass:
     def __init__(self, m, v, r, R):
-        self.m = m                  # mass of the particle
-        self.v = np.array(v, dtype=float)  # velocity vector
-        self.r = np.array(r, dtype=float)  # position vector
-        self.R = R                         # radius of the particle
+        self.m = m
+        self.v = np.array(v, dtype=float)
+        self.r = np.array(r, dtype=float)
+        self.R = R
 
     def update_position(self):
-        self.r += self.v * dt 
+        self.r += self.v * dt
 
     def collide_detection(self, other):
         return np.linalg.norm(self.r - other.r) <= (self.R + other.R)
 
-# Simulation parameters
-dt = 0.05         # time step
-num_steps = 530  # number of time steps
-m1 = 1.0
-m2 = 50
 
-particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0],R=0.45)  
-particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0],R=0.45)  
+# Simulation parameters
+dt = 0.05
+num_steps = 530
+m1 = 1.0
+m2 = 100
+
+particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0], R=0.45)
+particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0], R=0.45)
 
 
 # Create the figure and axis
-
 fig, ax = plt.subplots()
 
 ax.set_xlim(-10, 10)
@@ -1205,96 +1204,122 @@ ax.set_aspect('equal')
 ax.set_title("Particle Animation")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
-dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
 
-counter = 0
-
-
-# Create the particle as a red dot
 dotA, = ax.plot([], [], 'ro', markersize=10)
 dotB, = ax.plot([], [], 'bo', markersize=10)
 
 counter_text = ax.text(-9.5, 9, "")
 
-# Initialization function for animation
-def init():
-    dot.set_data([], [])
-    return dot,
+counter = 0
 
-# Update function for each frame
+
+# Initialization function
+def init():
+    dotA.set_data([], [])
+    dotB.set_data([], [])
+    counter_text.set_text("Collisions: 0")
+    return dotA, dotB, counter_text
+
+
+# Update function
 def update(frame):
     global counter
+
     particleA.update_position()
     particleB.update_position()
 
     dotA.set_data([particleA.r[0]], [particleA.r[1]])
     dotB.set_data([particleB.r[0]], [particleB.r[1]])
 
+    # Collision detection and response
+    if particleA.collide_detection(particleB):
+
+        vA, vB = particleA.v.copy(), particleB.v.copy()
+        mA, mB = particleA.m, particleB.m
+        rA, rB = particleA.r, particleB.r
+
+        if np.dot(vA - vB, rA - rB) < 0:
+
+            counter += 1
+
+            vA_new = vA - 2 * mB / (mA + mB) * (
+                np.dot(vA - vB, rA - rB) /
+                (1e-12 + np.linalg.norm(rA - rB))**2
+            ) * (rA - rB)
+
+            vB_new = vB - 2 * mA / (mA + mB) * (
+                np.dot(vB - vA, rB - rA) /
+                (1e-12 + np.linalg.norm(rB - rA))**2
+            ) * (rB - rA)
+
+            particleA.v = vA_new
+            particleB.v = vB_new
+
+    # Wall collision detection and response
+
+    # Particle A - x direction
+    if particleA.r[0] + particleA.R > 10:
+        particleA.r[0] = 10 - particleA.R
+        particleA.v[0] = -particleA.v[0]
+        counter += 1
+
+    elif particleA.r[0] - particleA.R < -10:
+        particleA.r[0] = -10 + particleA.R
+        particleA.v[0] = -particleA.v[0]
+        counter += 1
+
+    # Particle A - y direction
+    if particleA.r[1] + particleA.R > 10:
+        particleA.r[1] = 10 - particleA.R
+        particleA.v[1] = -particleA.v[1]
+        counter += 1
+
+    elif particleA.r[1] - particleA.R < -10:
+        particleA.r[1] = -10 + particleA.R
+        particleA.v[1] = -particleA.v[1]
+        counter += 1
+
+    # Particle B - x direction
+    if particleB.r[0] + particleB.R > 10:
+        particleB.r[0] = 10 - particleB.R
+        particleB.v[0] = -particleB.v[0]
+        counter += 1
+
+    elif particleB.r[0] - particleB.R < -10:
+        particleB.r[0] = -10 + particleB.R
+        particleB.v[0] = -particleB.v[0]
+        counter += 1
+
+    # Particle B - y direction
+    if particleB.r[1] + particleB.R > 10:
+        particleB.r[1] = 10 - particleB.R
+        particleB.v[1] = -particleB.v[1]
+        counter += 1
+
+    elif particleB.r[1] - particleB.R < -10:
+        particleB.r[1] = -10 + particleB.R
+        particleB.v[1] = -particleB.v[1]
+        counter += 1
+
     counter_text.set_text(f"Collisions: {counter}")
 
-    #collision detection and response
-    if particleA.collide_detection(particleB):
-        vA, vB, mA, mB, rA, rB = particleA.v, particleB.v, particleA.m, particleB.m, particleA.r, particleB.r
-        if np.dot(particleA.v - particleB.v,particleA.r-particleB.r) < 0:
-         counter +=1
-               
-        vA_new = vA - 2 * mB / (mA + mB) * np.dot(vA - vB, rA - rB) / (1e-12+np.linalg.norm(rA - rB))**2 * (rA - rB)
-        vB_new = vB - 2 * mA / (mA + mB) * np.dot(vB - vA, rB - rA) / (1e-12+np.linalg.norm(rB - rA))**2 * (rB - rA)
-        particleA.v = vA_new
-        particleB.v = vB_new
-        ### YOUR CODE HERE ###
+    return dotA, dotB, counter_text
 
 
-
-# Wall collision detection and response
-
-# Particle A - x direction
-if particleA.r[0] + particleA.R > 10:
-    particleA.r[0] = 10 - particleA.R
-    particleA.v[0] = -particleA.v[0]
-    counter += 1
-
-elif particleA.r[0] - particleA.R < -10:
-    particleA.r[0] = -10 + particleA.R
-    particleA.v[0] = -particleA.v[0]
-    counter += 1
-
-# Particle A - y direction
-if particleA.r[1] + particleA.R > 10:
-    particleA.r[1] = 10 - particleA.R
-    particleA.v[1] = -particleA.v[1]
-    counter += 1
-
-elif particleA.r[1] - particleA.R < -10:
-    particleA.r[1] = -10 + particleA.R
-    particleA.v[1] = -particleA.v[1]
-    counter += 1
-
-
-# Particle B - x direction
-if particleB.r[0] + particleB.R > 10:
-    particleB.r[0] = 10 - particleB.R
-    particleB.v[0] = -particleB.v[0]
-
-elif particleB.r[0] - particleB.R < -10:
-    particleB.r[0] = -10 + particleB.R
-    particleB.v[0] = -particleB.v[0]
-
-# Particle B - y direction
-if particleB.r[1] + particleB.R > 10:
-    particleB.r[1] = 10 - particleB.R
-    particleB.v[1] = -particleB.v[1]
-
-elif particleB.r[1] - particleB.R < -10:
-    particleB.r[1] = -10 + particleB.R
-    particleB.v[1] = -particleB.v[1]
-return dotA, dotB, counter_text
 # Create animation
-ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
+ani = FuncAnimation(
+    fig,
+    update,
+    frames=range(num_steps),
+    init_func=init,
+    blit=True,
+    interval=50
+)
 
-# For Jupyter notebook:
+# Display animation in Jupyter Notebook
 from IPython.display import HTML
 HTML(ani.to_jshtml())
+
 ```
 
 ```{exercise}
