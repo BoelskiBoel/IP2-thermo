@@ -144,7 +144,7 @@ def collide_detection(p1: ParticleClass, p2: ParticleClass) -> bool:
     dx = p1.r[0]-p2.r[0]
     dy = p1.r[1]-p2.r[1]
     rr = p1.R + p2.R
-    return  dx**2+dy**2 < rr**2 
+    return  dx**2+dy**2 <= rr**2 
     #Note: np.linalg.norm(p1.r - p2.r) < (p1.R + p2.R) had ook gekund, maar is veel langzamer. Controleer zelf!
 
 def particle_collision(p1: ParticleClass, p2: ParticleClass):
@@ -201,14 +201,14 @@ Leg uit dat d.m.v. onderstaande code de deeltjes allemaal dezelfde snelheid hebb
 Jouw antwoord hier...
 De deeltjes krijgen een x snelheid tussen de -1 en 1 m/s. Daarde wordt vy gelijk gesteld aan +/- sqrt(vx**2 + v0**2)
 
-v = sqrt(vx^2 + vy^2) als hierin vy wordt ingevyld valt vx weg en blijft alleen v0 over. v is dus altijd gelijk aan v0
+v = sqrt(vx^2 + vy^2) als hierin vy wordt ingevyld valt vx weg en blijft alleen v0 over. v is dus altijd gelijk aan v0. Ze zijn uniform verdeeld over de doos omdat er gebruik is gemaakt van de np.random.uniform functie. 
 ### YOUR CODE HERE ###
 ```
 
 ```python tags=["NB2_init"] editable=true slideshow={"slide_type": ""}
 def create_particles(particles):
     ''' Leegmaken en opnieuw aanmaken van deeltjes '''
-    particles.clear
+    particles.clear()
     for i in range(N):
         vx = np.random.uniform(-V_0, V_0)
         vy = np.random.choice([-1, 1]) * np.sqrt(V_0**2 - vx**2)        
@@ -227,7 +227,7 @@ Leg uit hoe er in onderstaande code wordt voorkomen dat de botsing tussen twee d
 ```
 
 ```{solution} ex-recap-6
-door de range van j bij i + 1 te laten starten. 
+door de range van j bij i + 1 te laten starten ipv bij 0. Daardoor wordt bijvoorbeeld nadat 1 met 2 is gecontrolleerd nooit 2 met 1 gecontroleerd. 
 ### YOUR CODE HERE ###
 ```
 
@@ -334,15 +334,23 @@ Voeg aan de simulatie een regel toe die voor elke tijdstap bepaalt wat de totale
 # plotten van kinetische energie als functie van tijd
 
 particles = []
-energy_tot = []
+energy_tot = np.zeros(100)
 create_particles(particles)
 for i in range(100):
     take_time_step(particles)
     # voeg de som van de kinetische energie in deze stap toe aan energy_tot 
     ### YOUR CODE HERE ###
+    energy_tot[i] = sum(particle.kin_energy for particle in particles)
 
 # plot de figuur van de kinetische energie als functie van de tijd. 
+t = range(100)
 ### YOUR CODE HERE ###
+plt.figure()
+plt.plot(t,energy_tot, ".")
+plt.xlabel("t(s)")
+plt.ylabel("E(J)")
+plt.ylim(19.9999999999999,20.0000000000001)
+plt.show()
 ```
 
 ```{exercise} 
@@ -351,7 +359,7 @@ Als je heel nauwkeurig naar de waarde voor de totale kinetische energie kijkt, d
 ```
 
 ```{solution} ex-recap-8
-Jouw antwoord hier...
+Het verschil is pas te zien bij een schaal van 10*10**-13 Joule. Het verschil komt door afrondingsfouten.
 ### YOUR CODE HERE ###
 ```
 
@@ -378,12 +386,39 @@ def handle_collisions(particles):
 
 Leg uit wat deze code precies doet. 
 
+als een deeltje botst tijdens een tijdstap wordt hij in de ignore list geplaatst waardoor hij in diezelfde tijdstap niet nog een keer kan botsen.
+
 Maak een script waarbij twee deeltjes met dezelfde (absolute) snelheid op een derde deeltje afbewegen en tegelijk zouden botsen.
 - Laat zien dat 'slechts' twee deeltjes een interactie met elkaar aan gaan.
 - Leg uit waarom dat een acceptabele benadering is wanneer je veel deeltjes botsingen per tijdseenheid hebt.
 - Voor wie een uitdaging wil: maak een grafiek met het aantal botsingen per tijdseenheid. Dit om bovenstaande benadering verder te verantwoorden.
 ```
 
+```python
+particles = [ParticleClass(m=1.0, v=[1.0, 0], r=[-2, 0], R=0.5),
+    ParticleClass(m=1.0, v=[0.0, 0], r=[0.0, 0], R=0.5),
+    ParticleClass(m=1.0, v=[-1.0, 0], r=[1, 0], R=0.5)]
+
+def handle_collisions(particles):
+    ignore_list = []
+    for i, p1 in enumerate(particles):
+        if p1 in ignore_list:
+            continue
+        for j, p2 in enumerate(particles):
+            if i >= j:
+                continue
+            if p2 in ignore_list:
+                continue
+            if collide_detection(p1, p2):
+                particle_collision(p1, p2)
+                ignore_list.append(p1)
+                ignore_list.append(p2)
+
+    for i, particle in enumerate(particles):
+        print("Deeltje", i, "snelheid=", particle.v)
+#maar van twee deeltjes verandert de snelheid en dat zijn dus de enige twee die interactie met elkaar hebben
+#dit is acceptabel omdat je super kleine tijdstappen hebt dus de kans dat een deeltje twee keer botst in een tijdstap is dan klein
+```
 
 ````{tip} Nog sneller
 Er is een manier om je script nog sneller te maken. 
@@ -526,8 +561,9 @@ for i in range(N-1):
     vx = np.random.uniform(-v_0,v_0)
     vy = np.random.choice([-1, 1])*np.sqrt(v_0**2-vx**2)        
     pos = Box_length_0*np.random.uniform(-1,1,2)
-    particles.append(ParticleClass(m=1.0, v=[vx, vy], r = pos, R=.5,c='blue')) 
-
+    particles.append(ParticleClass(m=1.0, v=[vx, vy], r = pos, R=.5,c='blue'))
+    
+# Een nieuw deeltje toevoegen aan de particle lijst
 particles.append(ParticleClass(m=20.0, v=[0, 0], r = [0, 0], R=.5,c='red')) 
 
 ```
@@ -563,9 +599,9 @@ plt.ylim(-Box_length_0,Box_length_0)
 
 for particle, particle_object in enumerate(particles):
     plt.plot(particle_object.r[0],particle_object.r[1],color=particle_object.c,marker='.')
-    # plt.arrow(particle_object.r[0],particle_object.r[1], 
-    #           particle_object.v[0],particle_object.v[1], 
-    #           head_width=0.05, head_length=0.1, color='red')
+    plt.arrow(particle_object.r[0],particle_object.r[1],
+              particle_object.v[0],particle_object.v[1], 
+               head_width=0.05, head_length=0.1, color='red')
 plt.show()
 
 ```
@@ -579,8 +615,10 @@ Hoe wordt er voor gezorgd dat de snelheid van elk deeltje gelijk is?
 ```
 
 ```{solution} ex-brownian-2
-### YOUR CODE HERE ###
-```
+de code laat met pijlen zien welke beweging een deeltje heeft uitgevoerd tijdens de simulatie
+
+er wordt ervoor gezorgd dat de snelheid van elk deeltje gelijk is door te zorgen dat vx^2 + vy^2 altijd op dezelfde v0^2 uitkomt
+
 
 We gaan nu de functies van de simulatie weer aanroepen:
 
@@ -662,8 +700,10 @@ from matplotlib.animation import FFMpegWriter
 
 # ---- tracking arrays ----
 track_x, track_y = [], []          # zwaar deeltje (bijv. particles[N-1])
-track_x2, track_y2 = [], []        # tweede deeltje (bijv. particles[0])
+track_x2, track_y2 = [], []   # tweede deeltje (bijv. particles[0])
+track_x3, track_y3 = [],[]    #tweede lichte deeltje aanmaken
 botsingen = []
+
 
 # ---- figure setup ----
 fig, ax = plt.subplots()
@@ -679,18 +719,22 @@ dots, = ax.plot([], [], 'ro', ms=18)
 # de twee deeltjes extra benadrukken
 heavy_dot, = ax.plot([], [], 'ko', ms=20)   # zwaar
 light_dot, = ax.plot([], [], 'bo', ms=18)   # tweede (blauw)
+light_dot_2, = ax.plot([],[], "go", ms = 18) #tweede lichte deeltje (groen)
 
 # ---- NIEUW: lijnen voor de paden ----
 heavy_path, = ax.plot([], [], 'k-', lw=1, alpha=0.8)
 light_path, = ax.plot([], [], 'b-', lw=1, alpha=0.8)
+light_path_2, = ax.plot([],[],"g-",lw=1,alpha=0.8)
 
 def init():
     dots.set_data([], [])
     heavy_dot.set_data([], [])
     light_dot.set_data([], [])
+    light_dot_2.set_data([],[])
     heavy_path.set_data([], [])
     light_path.set_data([], [])
-    return dots, heavy_dot, light_dot, heavy_path, light_path
+    light_path_2.set_data([],[])
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
 
 def update(frame):
     counter = 0
@@ -710,6 +754,9 @@ def update(frame):
     track_x2.append(particles[0].r[0])
     track_y2.append(particles[0].r[1])
 
+    track_x3.append(particles[1].r[0])
+    track_y3.append(particles[1].r[1])
+                    
     # ---- update alle deeltjes ----
     xs = [p.r[0] for p in particles]
     ys = [p.r[1] for p in particles]
@@ -718,12 +765,14 @@ def update(frame):
     # ---- update de 2 highlights ----
     heavy_dot.set_data([track_x[-1]], [track_y[-1]])
     light_dot.set_data([track_x2[-1]], [track_y2[-1]])
+    light_dot_2.set_data([track_x3[-1]],[track_y3[-1]])
 
     # ---- NIEUW: update de paden ----
     heavy_path.set_data(track_x, track_y)
     light_path.set_data(track_x2, track_y2)
+    light_path_2.set_data(track_x3,track_y3)
 
-    return dots, heavy_dot, light_dot, heavy_path, light_path
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
 
 ani = FuncAnimation(fig, update, frames=400, init_func=init, blit=True, interval=50)
 HTML(ani.to_jshtml())
@@ -749,7 +798,11 @@ ani.save("deeltjes.gif", writer="pillow", fps=20)
 
 ```{solution} ex-brownian-3
 ### YOUR CODE HERE ###
-```
+overeenkomsten: lichte deeltjes hebben dezelfde massa
+
+verschillen: zware massa legt altijd minder afstand af dan lichte deeltjes
+
+deeltjes leggen elke simulatie andere paden af
 
 
 We zouden gevoel willen krijgen voor het aantal botsingen dat per tijdseenheid plaatsvindt. 
@@ -763,6 +816,100 @@ Plot hieronder het aantal botsingen als functie van de tijd.
 
 ```python
 ### YOUR CODE HERE ###
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+from matplotlib.animation import FFMpegWriter
+
+
+# ---- tracking arrays ----
+track_x, track_y = [], []          # zwaar deeltje (bijv. particles[N-1])
+track_x2, track_y2 = [], []   # tweede deeltje (bijv. particles[0])
+track_x3, track_y3 = [],[]    #tweede lichte deeltje aanmaken
+botsingen = []
+
+
+# ---- figure setup ----
+fig, ax = plt.subplots()
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_xlim(-Box_size_0/2, Box_size_0/2)
+ax.set_ylim(-Box_size_0/2, Box_size_0/2)
+ax.set_aspect('equal')
+
+# alle deeltjes als rode punten
+dots, = ax.plot([], [], 'ro', ms=18)
+
+# de twee deeltjes extra benadrukken
+heavy_dot, = ax.plot([], [], 'ko', ms=20)   # zwaar
+light_dot, = ax.plot([], [], 'bo', ms=18)   # tweede (blauw)
+light_dot_2, = ax.plot([],[], "go", ms = 18) #tweede lichte deeltje (groen)
+
+# ---- NIEUW: lijnen voor de paden ----
+heavy_path, = ax.plot([], [], 'k-', lw=1, alpha=0.8)
+light_path, = ax.plot([], [], 'b-', lw=1, alpha=0.8)
+light_path_2, = ax.plot([],[],"g-",lw=1,alpha=0.8)
+
+def init():
+    dots.set_data([], [])
+    heavy_dot.set_data([], [])
+    light_dot.set_data([], [])
+    light_dot_2.set_data([],[])
+    heavy_path.set_data([], [])
+    light_path.set_data([], [])
+    light_path_2.set_data([],[])
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
+
+def update(frame):
+    counter = 0
+
+    for p in particles:
+        p.update_position()
+        p.boxcollision()
+
+    handle_collisions(particles)
+
+    botsingen.append(counter)
+
+    # ---- track punten ----
+    track_x.append(particles[N-1].r[0])
+    track_y.append(particles[N-1].r[1])
+
+    track_x2.append(particles[0].r[0])
+    track_y2.append(particles[0].r[1])
+
+    track_x3.append(particles[1].r[0])
+    track_y3.append(particles[1].r[1])
+                    
+    # ---- update alle deeltjes ----
+    xs = [p.r[0] for p in particles]
+    ys = [p.r[1] for p in particles]
+    dots.set_data(xs, ys)
+
+    # ---- update de 2 highlights ----
+    heavy_dot.set_data([track_x[-1]], [track_y[-1]])
+    light_dot.set_data([track_x2[-1]], [track_y2[-1]])
+    light_dot_2.set_data([track_x3[-1]],[track_y3[-1]])
+
+    # ---- NIEUW: update de paden ----
+    heavy_path.set_data(track_x, track_y)
+    light_path.set_data(track_x2, track_y2)
+    light_path_2.set_data(track_x3,track_y3)
+
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
+
+ani = FuncAnimation(fig, update, frames=400, init_func=init, blit=True, interval=50)
+HTML(ani.to_jshtml())
+
+
+# writer = FFMpegWriter(
+#     fps=30,
+#     metadata=dict(artist='Jij'),
+#     bitrate=5000
+# )
+
+# ani.save("deeltjes_hd.mp4", writer=writer, dpi=200)
+ani.save("deeltjes.gif", writer="pillow", fps=20)
 ```
 
 ```{warning} 🌶 Let op!
@@ -789,6 +936,100 @@ Maar voor een histogram hebben we veel deeltjes nodig.
 
 ```python tags=["NB2_brownian_distance_histogram"] editable=true slideshow={"slide_type": ""}
 ### YOUR CODE HERE ###
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+from matplotlib.animation import FFMpegWriter
+
+
+# ---- tracking arrays ----
+track_x, track_y = [], []          # zwaar deeltje (bijv. particles[N-1])
+track_x2, track_y2 = [], []   # tweede deeltje (bijv. particles[0])
+track_x3, track_y3 = [],[]    #tweede lichte deeltje aanmaken
+botsingen = []
+
+
+# ---- figure setup ----
+fig, ax = plt.subplots()
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_xlim(-Box_size_0/2, Box_size_0/2)
+ax.set_ylim(-Box_size_0/2, Box_size_0/2)
+ax.set_aspect('equal')
+
+# alle deeltjes als rode punten
+dots, = ax.plot([], [], 'ro', ms=18)
+
+# de twee deeltjes extra benadrukken
+heavy_dot, = ax.plot([], [], 'ko', ms=20)   # zwaar
+light_dot, = ax.plot([], [], 'bo', ms=18)   # tweede (blauw)
+light_dot_2, = ax.plot([],[], "go", ms = 18) #tweede lichte deeltje (groen)
+
+# ---- NIEUW: lijnen voor de paden ----
+heavy_path, = ax.plot([], [], 'k-', lw=1, alpha=0.8)
+light_path, = ax.plot([], [], 'b-', lw=1, alpha=0.8)
+light_path_2, = ax.plot([],[],"g-",lw=1,alpha=0.8)
+
+def init():
+    dots.set_data([], [])
+    heavy_dot.set_data([], [])
+    light_dot.set_data([], [])
+    light_dot_2.set_data([],[])
+    heavy_path.set_data([], [])
+    light_path.set_data([], [])
+    light_path_2.set_data([],[])
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
+
+def update(frame):
+    counter = 0
+
+    for p in particles:
+        p.update_position()
+        p.boxcollision()
+
+    handle_collisions(particles)
+
+    botsingen.append(counter)
+
+    # ---- track punten ----
+    track_x.append(particles[N-1].r[0])
+    track_y.append(particles[N-1].r[1])
+
+    track_x2.append(particles[0].r[0])
+    track_y2.append(particles[0].r[1])
+
+    track_x3.append(particles[1].r[0])
+    track_y3.append(particles[1].r[1])
+                    
+    # ---- update alle deeltjes ----
+    xs = [p.r[0] for p in particles]
+    ys = [p.r[1] for p in particles]
+    dots.set_data(xs, ys)
+
+    # ---- update de 2 highlights ----
+    heavy_dot.set_data([track_x[-1]], [track_y[-1]])
+    light_dot.set_data([track_x2[-1]], [track_y2[-1]])
+    light_dot_2.set_data([track_x3[-1]],[track_y3[-1]])
+
+    # ---- NIEUW: update de paden ----
+    heavy_path.set_data(track_x, track_y)
+    light_path.set_data(track_x2, track_y2)
+    light_path_2.set_data(track_x3,track_y3)
+
+    return dots, heavy_dot, light_dot, light_dot_2, heavy_path, light_path, light_path_2
+
+ani = FuncAnimation(fig, update, frames=400, init_func=init, blit=True, interval=50)
+HTML(ani.to_jshtml())
+
+
+# writer = FFMpegWriter(
+#     fps=30,
+#     metadata=dict(artist='Jij'),
+#     bitrate=5000
+# )
+
+# ani.save("deeltjes_hd.mp4", writer=writer, dpi=200)
+ani.save("deeltjes.gif", writer="pillow", fps=20)
 
 ```
 
