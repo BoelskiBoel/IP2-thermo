@@ -223,7 +223,12 @@ Schrijf een functie die de temperatuur van het gas in onze simulatie bepaalt:
 ```python tags=["NB3_tempfun"]
 def temperature(particles) -> float:
     temp = 0.0 
+    f = 2
+    k = 1.380649*10**-23
     ### YOUR CODE HERE ###
+    for p in particles:
+        temp += (0.5*p.m *np.sum((p.v))**2)*2/(f*k)
+    temp = temp/len(particles)
     return temp
 ```
 
@@ -247,12 +252,13 @@ for i in range(100):
     take_time_step(particles)
     # vastleggen van temperatuur per tijdstap
     ### YOUR CODE HERE ###
-
+    temperatures[i]=temperature(particles)
 plt.figure()
-plt.xlabel('Time')
-plt.ylabel('Temperature')
+plt.xlabel('Time(s)')
+plt.ylabel('Temperature(kelvin)')
 # plotten van tijd tegen temperatuur
 ### YOUR CODE HERE ###
+plt.plot(times,temperatures,".")
 plt.show()
 ```
 
@@ -348,6 +354,12 @@ pressures = np.zeros(100, dtype=float)
 times = np.linspace(1, 100, 100)
 
 ### YOUR CODE HERE ###
+create_particles(particles)
+for i in range(100):
+    take_time_step(particles)
+    handle_walls(particles)
+    pressures[i]=pressure
+    
 
 plt.figure()
 plt.xlabel('Time [step]')
